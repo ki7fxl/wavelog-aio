@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# if config.php is present, app is already set up
+if [ -f /app/application/config/docker/config.php ]; then
+    exec /usr/bin/supervisord
+fi
+
+# start mariadb temporarily to add user
+mariadbd --user mysql & 
+dbpid=$!
+
+# wait for server to come up
+
+for i in $(seq 0 30);
+do
+    if mariadb -e 'SELECT 1' >/dev/null; then
+        break;
+    fi
+    echo $i
+    sleep 1
+done
+
+# create user
+
+if [ -z "$DATABASE_PASSWORD" ]; then
+    dbpass=$(openssl rand -hex 16)
+    echo "Generated database password: $dbpass"
+else
+    dbpass="$DATABASE_PASSWORD"
+fi
+
+mariadb -e "CREATE DATABASE wavelog;"
+mariadb -e "CREATE USER wavelog@localhost IDENTIFIED BY '${dbpass}';"
+mariadb -e "GRANT ALL PRIVILEGES ON wavelog.* TO 'wavelog'@'localhost';"
+mariadb -e "FLUSH PRIVILEGES;"
+
+kill $dbpid
+
+exec /usr/bin/supervisord
