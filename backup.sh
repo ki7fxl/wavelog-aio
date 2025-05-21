@@ -4,6 +4,8 @@ mkdir -p backups
 
 running=$(podman inspect -f '{{.State.Running}}' wavelog)
 if [ $running = "true" ]; then
+    echo "Backing up SQL database..."
+    podman exec -i wavelog mysqldump -uroot wavelog > "backups/wavelog_$(date +%Y%m%d_%H%M%S).sql"
     echo "Stopping wavelog container..."
     podman stop wavelog >/dev/null
 fi

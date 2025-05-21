@@ -1,11 +1,12 @@
-FROM debian:bookworm
+FROM debian:bookworm-slim
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     curl php-common php-fpm php-curl php-mysql \
     php-gd php-mbstring php-zip php-xml php-ctype vim-tiny cron \
     supervisor openssl git nginx mariadb-server mariadb-client && \
     useradd -r wavelog && \
-    mkdir /run/mysqld && chown mysql:mysql /run/mysqld && \
+    mkdir /run/mysqld && rm -rf /var/lib/mysql && mkdir /var/lib/mysql && \
+    chown mysql:mysql /run/mysqld /var/lib/mysql && \
     rm -f /etc/php/8.2/fpm/pool.d/www.conf /etc/nginx/sites-enabled/default && \
     git clone https://github.com/wavelog/wavelog /app && \
     mkdir /app/application/config/docker && \
